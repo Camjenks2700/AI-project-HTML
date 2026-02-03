@@ -1,0 +1,106 @@
+<!--
+How to run locally:
+- Open this file (index.html) directly in your browser, or serve the folder with any static server.
+How to deploy on GitHub Pages:
+- Commit index.html, styles.css, and app.js to a GitHub repo and enable Pages for the main branch root.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2025 Form 1040 Line-by-Line Wizard (Study Tool)</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>2025 Form 1040 Line-by-Line Wizard (Study Tool)</h1>
+        <p class="subtitle">
+          Educational prototype — not tax advice — do not enter real SSNs or personal info.
+        </p>
+      </div>
+      <div class="header-actions">
+        <button id="loadDemo" class="secondary">Load Demo Data</button>
+        <button id="resetAll" class="danger">Reset</button>
+      </div>
+    </header>
+
+    <main class="app-layout">
+      <aside class="sidebar">
+        <div class="progress">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <nav>
+          <h2>Sections</h2>
+          <ol id="sectionList" class="section-list"></ol>
+        </nav>
+        <div class="jump">
+          <label for="jumpInput">Jump to line</label>
+          <input id="jumpInput" type="text" placeholder="e.g., 7 or 25a" />
+          <button id="jumpBtn">Go</button>
+        </div>
+        <button id="formViewBtn" class="secondary">Form View Summary</button>
+      </aside>
+
+      <section class="content">
+        <div class="wizard-controls">
+          <button id="prevBtn" class="secondary">Back</button>
+          <div class="step-info">
+            <span id="stepCounter">Step 1</span>
+            <span id="lineHint"></span>
+          </div>
+          <button id="nextBtn" class="primary">Next</button>
+        </div>
+
+        <div id="cardContainer" class="card-container"></div>
+
+        <section id="formView" class="form-view hidden" aria-live="polite">
+          <div class="form-view-header">
+            <div>
+              <h2>Form View Summary</h2>
+              <p>Line-by-line summary of your entries. Blank lines are highlighted.</p>
+            </div>
+            <div class="export-actions">
+              <button id="exportJson" class="secondary">Export JSON</button>
+              <button id="exportCsv" class="secondary">Export CSV</button>
+              <button id="closeFormView" class="primary">Close</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Line</th>
+                  <th>Label</th>
+                  <th>Value</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="summaryBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div id="explainModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-content">
+        <header>
+          <h2 id="modalTitle">Line Explanation</h2>
+          <button id="closeModal" aria-label="Close">×</button>
+        </header>
+        <div class="modal-body">
+          <p id="modalExplanation"></p>
+          <h3>Common mistakes / exam traps</h3>
+          <ul id="modalMistakes"></ul>
+          <p class="source"><strong>Where it comes from:</strong> <span id="modalSource"></span></p>
+          <button id="copyPrompt" class="primary">Copy AI Study Prompt</button>
+          <p id="copyStatus" class="copy-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
