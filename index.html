@@ -56,6 +56,167 @@ How to deploy on GitHub Pages:
 
         <div id="cardContainer" class="card-container"></div>
 
+        <!-- ADD BELOW: Schedules toggles and sections -->
+        <section class="card schedules-panel" id="schedulesPanel">
+          <h2>Schedules</h2>
+          <p class="helper">
+            Optional schedules that feed Form 1040 lines 8 and 10. Toggle on only if needed.
+          </p>
+          <div class="schedule-toggle">
+            <label>
+              <input type="checkbox" id="needSchedule1" />
+              Do you need Schedule 1?
+            </label>
+            <label>
+              <input type="checkbox" id="needScheduleC" />
+              Do you need Schedule C?
+            </label>
+          </div>
+        </section>
+
+        <section id="schedule1Section" class="card schedule hidden">
+          <div class="schedule-header">
+            <h2>Schedule 1 (Form 1040)</h2>
+            <span class="badge">Optional</span>
+          </div>
+          <p class="schedule-disclaimer">
+            Simplified educational version. Some lines not modeled; enter totals as needed.
+          </p>
+
+          <div class="schedule-subsection">
+            <h3>Schedule 1 Part I — Additional Income</h3>
+            <div class="schedule-grid">
+              <div class="input-row">
+                <label for="s1-line-1">Taxable refunds/credits of state & local income taxes</label>
+                <input id="s1-line-1" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-2a">Alimony received</label>
+                <input id="s1-line-2a" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-3">Business income or loss (Schedule C)</label>
+                <input id="s1-line-3" type="number" step="0.01" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-4">Other gains/losses</label>
+                <input id="s1-line-4" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-5">Rental real estate, royalties, partnerships, S corps, trusts</label>
+                <input id="s1-line-5" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-6">Farm income/loss</label>
+                <input id="s1-line-6" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-7">Unemployment compensation</label>
+                <input id="s1-line-7" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-8">Other income</label>
+                <input id="s1-line-8" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-10">Schedule 1 Line 10 — Additional income total</label>
+                <input id="s1-line-10" type="number" step="0.01" readonly />
+              </div>
+            </div>
+          </div>
+
+          <div class="schedule-subsection">
+            <h3>Schedule 1 Part II — Adjustments to Income</h3>
+            <div class="schedule-grid">
+              <div class="input-row">
+                <label for="s1-line-11">Educator expenses</label>
+                <input id="s1-line-11" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-12">Certain business expenses of reservists/performing artists</label>
+                <input id="s1-line-12" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-13">HSA deduction</label>
+                <input id="s1-line-13" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-14">Moving expenses for members of Armed Forces</label>
+                <input id="s1-line-14" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-15">Deductible part of self-employment tax</label>
+                <input id="s1-line-15" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-16">Self-employed SEP/SIMPLE/qualified plans</label>
+                <input id="s1-line-16" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-17">Self-employed health insurance deduction</label>
+                <input id="s1-line-17" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-18">Penalty on early withdrawal of savings</label>
+                <input id="s1-line-18" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-19">Alimony paid</label>
+                <input id="s1-line-19" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-20">IRA deduction</label>
+                <input id="s1-line-20" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-21">Student loan interest deduction</label>
+                <input id="s1-line-21" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-22">Other adjustments</label>
+                <input id="s1-line-22" type="number" step="0.01" min="0" />
+              </div>
+              <div class="input-row">
+                <label for="s1-line-26">Schedule 1 total adjustments</label>
+                <input id="s1-line-26" type="number" step="0.01" readonly />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="scheduleCSection" class="card schedule hidden">
+          <div class="schedule-header">
+            <h2>Schedule C (Profit or Loss From Business)</h2>
+            <span class="badge">Optional</span>
+          </div>
+          <p class="schedule-disclaimer">
+            Simplified educational version. Some lines not modeled; enter totals as needed.
+          </p>
+          <p class="helper">Do you have self-employment / sole proprietor income?</p>
+          <div class="schedule-grid">
+            <div class="input-row">
+              <label for="sc-line-1">Gross receipts or sales</label>
+              <input id="sc-line-1" type="number" step="0.01" min="0" />
+            </div>
+            <div class="input-row">
+              <label for="sc-line-2">Returns and allowances</label>
+              <input id="sc-line-2" type="number" step="0.01" min="0" />
+            </div>
+            <div class="input-row">
+              <label for="sc-line-4">Cost of goods sold</label>
+              <input id="sc-line-4" type="number" step="0.01" min="0" />
+            </div>
+            <div class="input-row">
+              <label for="sc-expenses-total">Total expenses</label>
+              <input id="sc-expenses-total" type="number" step="0.01" min="0" />
+            </div>
+            <div class="input-row">
+              <label for="sc-netprofit">Net profit or loss</label>
+              <input id="sc-netprofit" type="number" step="0.01" readonly />
+            </div>
+          </div>
+        </section>
+
         <section id="formView" class="form-view hidden" aria-live="polite">
           <div class="form-view-header">
             <div>

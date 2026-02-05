@@ -665,6 +665,42 @@ const LINE_ITEMS = [
   }
 ];
 
+const SCHEDULE1_ADDITIONAL_LINES = [
+  "s1-line-1",
+  "s1-line-2a",
+  "s1-line-3",
+  "s1-line-4",
+  "s1-line-5",
+  "s1-line-6",
+  "s1-line-7",
+  "s1-line-8"
+];
+
+const SCHEDULE1_ADJUSTMENT_LINES = [
+  "s1-line-11",
+  "s1-line-12",
+  "s1-line-13",
+  "s1-line-14",
+  "s1-line-15",
+  "s1-line-16",
+  "s1-line-17",
+  "s1-line-18",
+  "s1-line-19",
+  "s1-line-20",
+  "s1-line-21",
+  "s1-line-22"
+];
+
+const SCHEDULE1_TOTAL_LINES = ["s1-line-10", "s1-line-26"];
+
+const SCHEDULEC_LINES = [
+  "sc-line-1",
+  "sc-line-2",
+  "sc-line-4",
+  "sc-expenses-total",
+  "sc-netprofit"
+];
+
 const STD_DED_2025 = {
   single: 15750,
   mfj: 31500,
@@ -744,6 +780,11 @@ const exportCsv = document.getElementById("exportCsv");
 const loadDemo = document.getElementById("loadDemo");
 const resetAll = document.getElementById("resetAll");
 
+const schedule1Toggle = document.getElementById("needSchedule1");
+const scheduleCToggle = document.getElementById("needScheduleC");
+const schedule1Section = document.getElementById("schedule1Section");
+const scheduleCSection = document.getElementById("scheduleCSection");
+
 const modal = document.getElementById("explainModal");
 const modalTitle = document.getElementById("modalTitle");
 const modalExplanation = document.getElementById("modalExplanation");
@@ -781,7 +822,7 @@ function loadState() {
     }
     state.values = storedValues;
     state.currentIndex = parsed.currentIndex || 0;
-    recalculateDerivedValues();
+    recalcAll();
   } catch (error) {
     console.warn("Failed to parse saved state", error);
   }
@@ -803,7 +844,7 @@ function getValue(line) {
 
 function setValue(line, value) {
   state.values[line] = value;
-  recalculateDerivedValues();
+  recalcAll();
   saveState();
 }
 
@@ -861,7 +902,48 @@ function calculateTax(taxableIncome, status) {
   return tax;
 }
 
-function recalculateDerivedValues() {
+function recalcAll() {
+  const needSchedule1 = Boolean(getValue("needSchedule1"));
+  const needScheduleC = Boolean(getValue("needScheduleC"));
+
+  const grossReceipts = parseAmount(getValue("sc-line-1"));
+  const returnsAllowances = parseAmount(getValue("sc-line-2"));
+  const cogs = parseAmount(getValue("sc-line-4"));
+  const grossIncome = grossReceipts - returnsAllowances - cogs;
+  const expensesTotal = parseAmount(getValue("sc-expenses-total"));
+  const scheduleCNetProfit = needScheduleC
+    ? grossIncome - expensesTotal
+    : 0;
+
+  setDerivedValue("sc-netprofit", formatAmount(scheduleCNetProfit));
+
+  if (needSchedule1 && needScheduleC) {
+    setDerivedValue("s1-line-3", formatAmount(scheduleCNetProfit));
+  }
+
+  const schedule1AdditionalTotal = needSchedule1
+    ? SCHEDULE1_ADDITIONAL_LINES.reduce(
+        (sum, line) => sum + parseAmount(getValue(line)),
+        0
+      )
+    : 0;
+  const schedule1AdjustmentTotal = needSchedule1
+    ? SCHEDULE1_ADJUSTMENT_LINES.reduce(
+        (sum, line) => sum + parseAmount(getValue(line)),
+        0
+      )
+    : 0;
+
+  setDerivedValue("s1-line-10", formatAmount(schedule1AdditionalTotal));
+  setDerivedValue("s1-line-26", formatAmount(schedule1AdjustmentTotal));
+
+  if (needSchedule1) {
+    setDerivedValue("8", formatAmount(schedule1AdditionalTotal));
+    setDerivedValue("10", formatAmount(schedule1AdjustmentTotal));
+  }
+
+  updateScheduleUI();
+
   const filingStatus = getValue("filingStatus");
   const deductionMode = getValue("dedMode") || "standard";
   if (!getValue("dedMode")) {
@@ -1011,6 +1093,55 @@ function recalculateDerivedValues() {
   );
 }
 
+function updateScheduleUI() {
+  if (schedule1Toggle) {
+    schedule1Toggle.checked = Boolean(getValue("needSchedule1"));
+  }
+  if (scheduleCToggle) {
+    scheduleCToggle.checked = Boolean(getValue("needScheduleC"));
+  }
+
+  const needSchedule1 = Boolean(getValue("needSchedule1"));
+  const needScheduleC = Boolean(getValue("needScheduleC"));
+
+  if (schedule1Section) {
+    schedule1Section.classList.toggle("hidden", !needSchedule1);
+  }
+  if (scheduleCSection) {
+    scheduleCSection.classList.toggle("hidden", !needScheduleC);
+  }
+
+  [...SCHEDULE1_ADDITIONAL_LINES, ...SCHEDULE1_ADJUSTMENT_LINES, ...SCHEDULE1_TOTAL_LINES].forEach(
+    (line) => {
+      const input = document.getElementById(line);
+      if (input) {
+        input.value = getValue(line);
+      }
+    }
+  );
+
+  SCHEDULEC_LINES.forEach((line) => {
+    const input = document.getElementById(line);
+    if (input) {
+      input.value = getValue(line);
+    }
+  });
+
+  const s1Line3 = document.getElementById("s1-line-3");
+  if (s1Line3) {
+    s1Line3.readOnly = needScheduleC;
+  }
+
+  const line8Input = document.getElementById("line-8");
+  const line10Input = document.getElementById("line-10");
+  if (line8Input) {
+    line8Input.disabled = needSchedule1;
+  }
+  if (line10Input) {
+    line10Input.disabled = needSchedule1;
+  }
+}
+
 function renderSections() {
   sectionList.innerHTML = "";
   SECTIONS.forEach((section, index) => {
@@ -1060,6 +1191,7 @@ function getInputId(item) {
 function renderCard() {
   cardContainer.innerHTML = "";
   const item = LINE_ITEMS[state.currentIndex];
+  const schedule1Enabled = Boolean(getValue("needSchedule1"));
   const card = document.createElement("div");
   card.className = "card";
 
@@ -1073,6 +1205,12 @@ function renderCard() {
     const badge = document.createElement("span");
     badge.className = "badge";
     badge.textContent = "Simplified/Manual";
+    header.appendChild(badge);
+  }
+  if (schedule1Enabled && (item.line === "8" || item.line === "10")) {
+    const badge = document.createElement("span");
+    badge.className = "badge auto";
+    badge.textContent = "Auto from Schedule 1";
     header.appendChild(badge);
   }
   if (item.auto) {
@@ -1155,6 +1293,9 @@ function renderCard() {
   if (item.line === "12" || item.auto) {
     input.disabled = true;
   }
+  if (schedule1Enabled && (item.line === "8" || item.line === "10")) {
+    input.disabled = true;
+  }
 
   inputRow.appendChild(input);
   if (item.line === "12") {
@@ -1175,6 +1316,12 @@ function renderCard() {
     const helper = document.createElement("p");
     helper.className = "helper";
     helper.textContent = "This line updates automatically based on previous entries.";
+    inputRow.appendChild(helper);
+  }
+  if (schedule1Enabled && (item.line === "8" || item.line === "10")) {
+    const helper = document.createElement("p");
+    helper.className = "helper";
+    helper.textContent = "Auto from Schedule 1 totals. Turn off Schedule 1 to edit manually.";
     inputRow.appendChild(helper);
   }
 
@@ -1261,37 +1408,92 @@ function handleJump() {
 
 function renderSummary() {
   summaryBody.innerHTML = "";
-  LINE_ITEMS.forEach((item) => {
+  const schedule1Enabled = Boolean(getValue("needSchedule1"));
+  const scheduleCEnabled = Boolean(getValue("needScheduleC"));
+
+  const addRow = (line, label, value, notes) => {
     const row = document.createElement("tr");
-    const value = getValue(item.line);
     if (!value) {
       row.classList.add("blank");
     }
 
     const lineCell = document.createElement("td");
-    lineCell.textContent = item.line;
+    lineCell.textContent = line;
     const labelCell = document.createElement("td");
-    labelCell.textContent = item.label;
+    labelCell.textContent = label;
     const valueCell = document.createElement("td");
     valueCell.textContent = value || "Blank";
     const notesCell = document.createElement("td");
-    notesCell.textContent = item.notes;
+    notesCell.textContent = notes || "";
 
     row.appendChild(lineCell);
     row.appendChild(labelCell);
     row.appendChild(valueCell);
     row.appendChild(notesCell);
     summaryBody.appendChild(row);
+  };
+
+  LINE_ITEMS.forEach((item) => {
+    const value = getValue(item.line);
+    const notes =
+      schedule1Enabled && (item.line === "8" || item.line === "10")
+        ? `${item.notes} (Auto from Schedule 1)`
+        : item.notes;
+    addRow(item.line, item.label, value, notes);
   });
+
+  addRow(
+    "Schedule 1 Line 10",
+    "Schedule 1 additional income total",
+    getValue("s1-line-10"),
+    schedule1Enabled ? "Feeds Form 1040 line 8." : "Schedule 1 not enabled."
+  );
+  addRow(
+    "Schedule 1 Line 26",
+    "Schedule 1 total adjustments",
+    getValue("s1-line-26"),
+    schedule1Enabled ? "Feeds Form 1040 line 10." : "Schedule 1 not enabled."
+  );
+  addRow(
+    "Schedule C",
+    "Schedule C net profit or loss",
+    getValue("sc-netprofit"),
+    scheduleCEnabled ? "Flows to Schedule 1 line 3." : "Schedule C not enabled."
+  );
 }
 
 function exportData(format) {
+  const schedule1Enabled = Boolean(getValue("needSchedule1"));
   const data = LINE_ITEMS.map((item) => ({
     line: item.line,
-    label: item.label,
+    label:
+      schedule1Enabled && (item.line === "8" || item.line === "10")
+        ? `${item.label} (Auto from Schedule 1)`
+        : item.label,
     value: getValue(item.line) || "",
     section: item.section
   }));
+
+  data.push(
+    {
+      line: "Schedule 1 Line 10",
+      label: "Schedule 1 additional income total",
+      value: getValue("s1-line-10") || "",
+      section: "Schedule 1"
+    },
+    {
+      line: "Schedule 1 Line 26",
+      label: "Schedule 1 total adjustments",
+      value: getValue("s1-line-26") || "",
+      section: "Schedule 1"
+    },
+    {
+      line: "Schedule C",
+      label: "Schedule C net profit or loss",
+      value: getValue("sc-netprofit") || "",
+      section: "Schedule C"
+    }
+  );
 
   if (format === "json") {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -1331,6 +1533,27 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+function bindScheduleInputs() {
+  const inputIds = [
+    ...SCHEDULE1_ADDITIONAL_LINES,
+    ...SCHEDULE1_ADJUSTMENT_LINES,
+    "sc-line-1",
+    "sc-line-2",
+    "sc-line-4",
+    "sc-expenses-total"
+  ];
+  inputIds.forEach((line) => {
+    const input = document.getElementById(line);
+    if (!input) {
+      return;
+    }
+    input.value = getValue(line);
+    input.addEventListener("input", (event) => {
+      setValue(line, event.target.value);
+    });
+  });
+}
+
 function loadDemoData() {
   state.values = {
     "Header-Name": "Alex Example",
@@ -1348,7 +1571,7 @@ function loadDemoData() {
     "25a": "7200",
     "Sign-Primary": "Alex Example"
   };
-  recalculateDerivedValues();
+  recalcAll();
   saveState();
   renderCard();
 }
@@ -1360,7 +1583,7 @@ function resetData() {
   }
   state.values = {};
   state.currentIndex = 0;
-  recalculateDerivedValues();
+  recalcAll();
   saveState();
   renderCard();
   formView.classList.add("hidden");
@@ -1392,6 +1615,24 @@ exportCsv.addEventListener("click", () => exportData("csv"));
 loadDemo.addEventListener("click", loadDemoData);
 resetAll.addEventListener("click", resetData);
 
+if (schedule1Toggle) {
+  schedule1Toggle.addEventListener("change", () => {
+    setValue("needSchedule1", schedule1Toggle.checked);
+    if (!schedule1Toggle.checked) {
+      setValue("8", "0");
+      setValue("10", "0");
+    }
+    renderCard();
+  });
+}
+
+if (scheduleCToggle) {
+  scheduleCToggle.addEventListener("change", () => {
+    setValue("needScheduleC", scheduleCToggle.checked);
+    renderCard();
+  });
+}
+
 closeModal.addEventListener("click", closeModalWindow);
 modal.addEventListener("click", (event) => {
   if (event.target === modal) {
@@ -1399,6 +1640,7 @@ modal.addEventListener("click", (event) => {
   }
 });
 
+bindScheduleInputs();
 loadState();
-recalculateDerivedValues();
+recalcAll();
 renderCard();
