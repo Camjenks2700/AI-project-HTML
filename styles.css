@@ -166,6 +166,11 @@ body {
   font-weight: 600;
 }
 
+.badge.auto {
+  background: #e6f4ff;
+  color: #1a4c8f;
+}
+
 .input-row {
   display: grid;
   gap: 0.5rem;
@@ -187,6 +192,11 @@ body {
 .input-row input:disabled,
 .input-row select:disabled,
 .input-row textarea:disabled {
+  background: #f0f3f9;
+  color: var(--muted);
+}
+
+.input-row input[readonly] {
   background: #f0f3f9;
   color: var(--muted);
 }
@@ -253,6 +263,43 @@ button.danger {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.5rem;
+}
+
+.schedules-panel h2 {
+  margin: 0 0 0.5rem;
+}
+
+.schedule-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.schedule {
+  gap: 1.5rem;
+}
+
+.schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.schedule-disclaimer {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.schedule-subsection {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.schedule-grid {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .form-view-header {
