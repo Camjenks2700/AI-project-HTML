@@ -126,7 +126,8 @@ const LINE_ITEMS = [
     section: SECTIONS[1],
     schedule: "W-2",
     notes: "Sum of lines 1a–1e as applicable.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "2a",
@@ -243,7 +244,8 @@ const LINE_ITEMS = [
     section: SECTIONS[2],
     schedule: "Form 1040",
     notes: "Sum of income lines.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "10",
@@ -261,6 +263,17 @@ const LINE_ITEMS = [
     section: SECTIONS[2],
     schedule: "Form 1040",
     notes: "Total income minus adjustments.",
+    manual: true,
+    auto: true
+  },
+  {
+    line: "12-Standard-Method",
+    label: "Standard deduction method",
+    type: "select",
+    options: ["Standard deduction (auto)", "Itemized deductions (enter amount)"],
+    section: SECTIONS[3],
+    schedule: "Form 1040",
+    notes: "Choose standard deduction or enter itemized deductions manually.",
     manual: true
   },
   {
@@ -269,7 +282,7 @@ const LINE_ITEMS = [
     type: "number",
     section: SECTIONS[3],
     schedule: "Schedule A",
-    notes: "Standard deduction or itemized deductions.",
+    notes: "Auto-filled with the standard deduction unless itemized is selected.",
     manual: true
   },
   {
@@ -288,7 +301,8 @@ const LINE_ITEMS = [
     section: SECTIONS[3],
     schedule: "Form 1040",
     notes: "Sum of deductions lines 12–13.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "15",
@@ -296,8 +310,9 @@ const LINE_ITEMS = [
     type: "number",
     section: SECTIONS[4],
     schedule: "Form 1040",
-    notes: "AGI minus deductions.",
-    manual: true
+    notes: "AGI minus total deductions.",
+    manual: true,
+    auto: true
   },
   {
     line: "16",
@@ -305,8 +320,9 @@ const LINE_ITEMS = [
     type: "number",
     section: SECTIONS[5],
     schedule: "Tax tables/Worksheet",
-    notes: "Tax computed from taxable income.",
-    manual: true
+    notes: "Auto-estimated from taxable income using 2024 brackets (study tool).",
+    manual: true,
+    auto: true
   },
   {
     line: "17",
@@ -324,7 +340,8 @@ const LINE_ITEMS = [
     section: SECTIONS[5],
     schedule: "Form 1040",
     notes: "Sum of lines 16 and 17.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "19",
@@ -351,7 +368,8 @@ const LINE_ITEMS = [
     section: SECTIONS[5],
     schedule: "Form 1040",
     notes: "Sum of credits lines 19–20.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "22",
@@ -360,7 +378,8 @@ const LINE_ITEMS = [
     section: SECTIONS[5],
     schedule: "Form 1040",
     notes: "Line 18 minus line 21.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "23",
@@ -378,7 +397,8 @@ const LINE_ITEMS = [
     section: SECTIONS[5],
     schedule: "Form 1040",
     notes: "Line 22 plus line 23.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "25a",
@@ -414,7 +434,8 @@ const LINE_ITEMS = [
     section: SECTIONS[6],
     schedule: "Form 1040",
     notes: "Sum of lines 25a–25c.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "26",
@@ -468,7 +489,8 @@ const LINE_ITEMS = [
     section: SECTIONS[6],
     schedule: "Form 1040",
     notes: "Sum of payments lines 25d–30.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "32",
@@ -486,7 +508,8 @@ const LINE_ITEMS = [
     section: SECTIONS[6],
     schedule: "Form 1040",
     notes: "Line 31 plus line 32.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "34",
@@ -495,7 +518,8 @@ const LINE_ITEMS = [
     section: SECTIONS[7],
     schedule: "Form 1040",
     notes: "Payments minus total tax.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "35a",
@@ -504,7 +528,8 @@ const LINE_ITEMS = [
     section: SECTIONS[7],
     schedule: "Form 1040",
     notes: "Refund you want issued.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "35b",
@@ -541,7 +566,8 @@ const LINE_ITEMS = [
     section: SECTIONS[7],
     schedule: "Form 1040",
     notes: "Total tax minus payments.",
-    manual: true
+    manual: true,
+    auto: true
   },
   {
     line: "37",
@@ -627,6 +653,62 @@ const LINE_ITEMS = [
   }
 ];
 
+const STANDARD_DEDUCTIONS = {
+  Single: 14600,
+  "Married Filing Jointly": 29200,
+  "Married Filing Separately": 14600,
+  "Head of Household": 21900,
+  "Qualifying Surviving Spouse": 29200
+};
+
+const TAX_BRACKETS = {
+  Single: [
+    { upTo: 11600, rate: 0.1 },
+    { upTo: 47150, rate: 0.12 },
+    { upTo: 100525, rate: 0.22 },
+    { upTo: 191950, rate: 0.24 },
+    { upTo: 243725, rate: 0.32 },
+    { upTo: 609350, rate: 0.35 },
+    { upTo: Infinity, rate: 0.37 }
+  ],
+  "Married Filing Jointly": [
+    { upTo: 23200, rate: 0.1 },
+    { upTo: 94300, rate: 0.12 },
+    { upTo: 201050, rate: 0.22 },
+    { upTo: 383900, rate: 0.24 },
+    { upTo: 487450, rate: 0.32 },
+    { upTo: 731200, rate: 0.35 },
+    { upTo: Infinity, rate: 0.37 }
+  ],
+  "Married Filing Separately": [
+    { upTo: 11600, rate: 0.1 },
+    { upTo: 47150, rate: 0.12 },
+    { upTo: 100525, rate: 0.22 },
+    { upTo: 191950, rate: 0.24 },
+    { upTo: 243725, rate: 0.32 },
+    { upTo: 365600, rate: 0.35 },
+    { upTo: Infinity, rate: 0.37 }
+  ],
+  "Head of Household": [
+    { upTo: 16550, rate: 0.1 },
+    { upTo: 63100, rate: 0.12 },
+    { upTo: 100500, rate: 0.22 },
+    { upTo: 191950, rate: 0.24 },
+    { upTo: 243700, rate: 0.32 },
+    { upTo: 609350, rate: 0.35 },
+    { upTo: Infinity, rate: 0.37 }
+  ],
+  "Qualifying Surviving Spouse": [
+    { upTo: 23200, rate: 0.1 },
+    { upTo: 94300, rate: 0.12 },
+    { upTo: 201050, rate: 0.22 },
+    { upTo: 383900, rate: 0.24 },
+    { upTo: 487450, rate: 0.32 },
+    { upTo: 731200, rate: 0.35 },
+    { upTo: Infinity, rate: 0.37 }
+  ]
+};
+
 const state = {
   values: {},
   currentIndex: 0
@@ -668,6 +750,7 @@ function loadState() {
     const parsed = JSON.parse(stored);
     state.values = parsed.values || {};
     state.currentIndex = parsed.currentIndex || 0;
+    recalculateDerivedValues();
   } catch (error) {
     console.warn("Failed to parse saved state", error);
   }
@@ -689,7 +772,208 @@ function getValue(line) {
 
 function setValue(line, value) {
   state.values[line] = value;
+  recalculateDerivedValues();
   saveState();
+}
+
+function parseAmount(value) {
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+  const normalized = String(value).replace(/,/g, "");
+  const parsed = Number.parseFloat(normalized);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function formatAmount(value) {
+  if (!Number.isFinite(value)) {
+    return "";
+  }
+  return value.toFixed(2).replace(/\.00$/, "");
+}
+
+function hasAnyValue(lines) {
+  return lines.some((line) => {
+    const value = getValue(line);
+    return value !== "" && value !== null && value !== undefined;
+  });
+}
+
+function setDerivedValue(line, value) {
+  state.values[line] = value;
+}
+
+function getStandardDeduction(status) {
+  return STANDARD_DEDUCTIONS[status] ?? 0;
+}
+
+function calculateTax(taxableIncome, status) {
+  const brackets = TAX_BRACKETS[status];
+  if (!brackets || taxableIncome <= 0) {
+    return 0;
+  }
+  let remaining = taxableIncome;
+  let lastCap = 0;
+  let tax = 0;
+  brackets.forEach((bracket) => {
+    const cap = bracket.upTo;
+    if (remaining <= 0) {
+      return;
+    }
+    const taxableAtRate = Math.min(remaining, cap - lastCap);
+    if (taxableAtRate > 0) {
+      tax += taxableAtRate * bracket.rate;
+      remaining -= taxableAtRate;
+      lastCap = cap;
+    }
+  });
+  return tax;
+}
+
+function recalculateDerivedValues() {
+  const filingStatus = getValue("Header-Filing");
+  const standardMethod =
+    getValue("12-Standard-Method") || "Standard deduction (auto)";
+  if (!getValue("12-Standard-Method")) {
+    setDerivedValue("12-Standard-Method", standardMethod);
+  }
+
+  const useStandardDeduction = standardMethod === "Standard deduction (auto)";
+  if (useStandardDeduction) {
+    const deductionAmount = getStandardDeduction(filingStatus);
+    setDerivedValue(
+      "12",
+      deductionAmount ? formatAmount(deductionAmount) : ""
+    );
+  }
+
+  const wagesSources = ["1a", "1b", "1c", "1d", "1e"];
+  const wagesTotal = wagesSources.reduce(
+    (sum, line) => sum + parseAmount(getValue(line)),
+    0
+  );
+  setDerivedValue(
+    "1z",
+    hasAnyValue(wagesSources) ? formatAmount(wagesTotal) : ""
+  );
+
+  const incomeSources = ["1z", "2b", "3b", "4b", "5b", "6b", "7", "8"];
+  const totalIncome = incomeSources.reduce(
+    (sum, line) => sum + parseAmount(getValue(line)),
+    0
+  );
+  setDerivedValue(
+    "9",
+    hasAnyValue(incomeSources) ? formatAmount(totalIncome) : ""
+  );
+
+  const adjustments = parseAmount(getValue("10"));
+  const agi = parseAmount(getValue("9")) - adjustments;
+  setDerivedValue(
+    "11",
+    hasAnyValue(["9", "10"]) ? formatAmount(Math.max(0, agi)) : ""
+  );
+
+  const totalDeductions =
+    parseAmount(getValue("12")) + parseAmount(getValue("13"));
+  setDerivedValue(
+    "14",
+    hasAnyValue(["12", "13"]) ? formatAmount(totalDeductions) : ""
+  );
+
+  const taxableIncome =
+    parseAmount(getValue("11")) - parseAmount(getValue("14"));
+  setDerivedValue(
+    "15",
+    hasAnyValue(["11", "14"])
+      ? formatAmount(Math.max(0, taxableIncome))
+      : ""
+  );
+
+  const taxAmount = calculateTax(
+    parseAmount(getValue("15")),
+    filingStatus
+  );
+  setDerivedValue(
+    "16",
+    hasAnyValue(["15"]) && filingStatus ? formatAmount(taxAmount) : ""
+  );
+
+  const totalTax = parseAmount(getValue("16")) + parseAmount(getValue("17"));
+  setDerivedValue(
+    "18",
+    hasAnyValue(["16", "17"]) ? formatAmount(totalTax) : ""
+  );
+
+  const totalCredits =
+    parseAmount(getValue("19")) + parseAmount(getValue("20"));
+  setDerivedValue(
+    "21",
+    hasAnyValue(["19", "20"]) ? formatAmount(totalCredits) : ""
+  );
+
+  const taxAfterCredits =
+    parseAmount(getValue("18")) - parseAmount(getValue("21"));
+  setDerivedValue(
+    "22",
+    hasAnyValue(["18", "21"])
+      ? formatAmount(Math.max(0, taxAfterCredits))
+      : ""
+  );
+
+  const totalTaxWithOther =
+    parseAmount(getValue("22")) + parseAmount(getValue("23"));
+  setDerivedValue(
+    "24",
+    hasAnyValue(["22", "23"]) ? formatAmount(totalTaxWithOther) : ""
+  );
+
+  const totalWithheld =
+    parseAmount(getValue("25a")) +
+    parseAmount(getValue("25b")) +
+    parseAmount(getValue("25c"));
+  setDerivedValue(
+    "25d",
+    hasAnyValue(["25a", "25b", "25c"]) ? formatAmount(totalWithheld) : ""
+  );
+
+  const totalPayments =
+    parseAmount(getValue("25d")) +
+    parseAmount(getValue("26")) +
+    parseAmount(getValue("27")) +
+    parseAmount(getValue("28")) +
+    parseAmount(getValue("29")) +
+    parseAmount(getValue("30"));
+  setDerivedValue(
+    "31",
+    hasAnyValue(["25d", "26", "27", "28", "29", "30"])
+      ? formatAmount(totalPayments)
+      : ""
+  );
+
+  const totalPaymentsCredits =
+    parseAmount(getValue("31")) + parseAmount(getValue("32"));
+  setDerivedValue(
+    "33",
+    hasAnyValue(["31", "32"]) ? formatAmount(totalPaymentsCredits) : ""
+  );
+
+  const overpaid =
+    parseAmount(getValue("33")) - parseAmount(getValue("24"));
+  const refundAmount = Math.max(0, overpaid);
+  const amountOwed = Math.max(0, -overpaid);
+  setDerivedValue(
+    "34",
+    hasAnyValue(["33", "24"]) ? formatAmount(refundAmount) : ""
+  );
+  setDerivedValue(
+    "35a",
+    hasAnyValue(["34"]) ? formatAmount(refundAmount) : ""
+  );
+  setDerivedValue(
+    "36",
+    hasAnyValue(["33", "24"]) ? formatAmount(amountOwed) : ""
+  );
 }
 
 function renderSections() {
@@ -739,6 +1023,12 @@ function renderCard() {
     badge.textContent = "Simplified/Manual";
     header.appendChild(badge);
   }
+  if (item.auto) {
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = "Auto-calculated";
+    header.appendChild(badge);
+  }
 
   const inputRow = document.createElement("div");
   inputRow.className = "input-row";
@@ -770,7 +1060,28 @@ function renderCard() {
     setValue(item.line, event.target.value);
   });
 
+  const standardMethod = getValue("12-Standard-Method");
+  const isStandardDeduction = standardMethod === "Standard deduction (auto)";
+  if (item.line === "12") {
+    input.disabled = isStandardDeduction;
+  }
+  if (item.auto) {
+    input.disabled = true;
+  }
+
   inputRow.appendChild(input);
+  if (item.line === "12" && isStandardDeduction) {
+    const helper = document.createElement("p");
+    helper.className = "helper";
+    helper.textContent = "Auto-filled from the filing status standard deduction.";
+    inputRow.appendChild(helper);
+  }
+  if (item.auto) {
+    const helper = document.createElement("p");
+    helper.className = "helper";
+    helper.textContent = "This line updates automatically based on previous entries.";
+    inputRow.appendChild(helper);
+  }
 
   const actions = document.createElement("div");
   actions.className = "card-actions";
@@ -930,25 +1241,17 @@ function loadDemoData() {
     "Header-Name": "Alex Example",
     "Header-Filing": "Single",
     "Header-Dependents": "0",
+    "12-Standard-Method": "Standard deduction (auto)",
     "1a": "65000",
     "2b": "120",
     "3b": "75",
     "7": "500",
     "8": "0",
-    "9": "65695",
     "10": "1500",
-    "11": "64195",
-    "12": "13850",
-    "15": "50345",
-    "16": "6200",
-    "18": "6200",
-    "24": "6200",
     "25a": "7200",
-    "33": "7200",
-    "34": "1000",
-    "35a": "1000",
     "Sign-Primary": "Alex Example"
   };
+  recalculateDerivedValues();
   saveState();
   renderCard();
 }
@@ -960,6 +1263,7 @@ function resetData() {
   }
   state.values = {};
   state.currentIndex = 0;
+  recalculateDerivedValues();
   saveState();
   renderCard();
   formView.classList.add("hidden");
@@ -999,4 +1303,5 @@ modal.addEventListener("click", (event) => {
 });
 
 loadState();
+recalculateDerivedValues();
 renderCard();

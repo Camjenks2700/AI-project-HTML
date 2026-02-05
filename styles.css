@@ -176,6 +176,19 @@ body {
   font-size: 1rem;
 }
 
+.input-row input:disabled,
+.input-row select:disabled,
+.input-row textarea:disabled {
+  background: #f0f3f9;
+  color: var(--muted);
+}
+
+.input-row .helper {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .card-actions {
   display: flex;
   gap: 0.75rem;
