@@ -41,15 +41,15 @@ const LINE_ITEMS = [
     manual: true
   },
   {
-    line: "Header-Filing",
-    label: "Filing status",
+    line: "filingStatus",
+    label: "Filing status (2025)",
     type: "select",
     options: [
-      "Single",
-      "Married Filing Jointly",
-      "Married Filing Separately",
-      "Head of Household",
-      "Qualifying Surviving Spouse"
+      { value: "single", label: "Single" },
+      { value: "mfj", label: "Married Filing Jointly" },
+      { value: "mfs", label: "Married Filing Separately" },
+      { value: "hoh", label: "Head of Household" },
+      { value: "qss", label: "Qualifying Surviving Spouse" }
     ],
     section: SECTIONS[0],
     schedule: "Taxpayer record",
@@ -267,13 +267,25 @@ const LINE_ITEMS = [
     auto: true
   },
   {
-    line: "12-Standard-Method",
-    label: "Standard deduction method",
-    type: "select",
-    options: ["Standard deduction (auto)", "Itemized deductions (enter amount)"],
+    line: "dedMode",
+    label: "Deduction mode",
+    type: "radio",
+    options: [
+      { value: "standard", label: "Standard deduction" },
+      { value: "itemized", label: "Itemized deductions" }
+    ],
     section: SECTIONS[3],
     schedule: "Form 1040",
-    notes: "Choose standard deduction or enter itemized deductions manually.",
+    notes: "Choose standard or itemized deductions for line 12.",
+    manual: true
+  },
+  {
+    line: "itemizedTotal",
+    label: "Itemized deductions total (Schedule A)",
+    type: "number",
+    section: SECTIONS[3],
+    schedule: "Schedule A",
+    notes: "Enter your total itemized deductions when itemized mode is selected.",
     manual: true
   },
   {
@@ -281,9 +293,10 @@ const LINE_ITEMS = [
     label: "Standard or itemized deductions",
     type: "number",
     section: SECTIONS[3],
-    schedule: "Schedule A",
-    notes: "Auto-filled with the standard deduction unless itemized is selected.",
-    manual: true
+    schedule: "Form 1040",
+    notes: "Auto-filled from the selected deduction mode.",
+    manual: true,
+    auto: true
   },
   {
     line: "13",
@@ -296,13 +309,12 @@ const LINE_ITEMS = [
   },
   {
     line: "14",
-    label: "Total deductions",
+    label: "Additional deductions (optional)",
     type: "number",
     section: SECTIONS[3],
     schedule: "Form 1040",
-    notes: "Sum of deductions lines 12–13.",
-    manual: true,
-    auto: true
+    notes: "Other deductions not captured above.",
+    manual: true
   },
   {
     line: "15",
@@ -310,7 +322,7 @@ const LINE_ITEMS = [
     type: "number",
     section: SECTIONS[4],
     schedule: "Form 1040",
-    notes: "AGI minus total deductions.",
+    notes: "AGI minus deductions on lines 12–14.",
     manual: true,
     auto: true
   },
@@ -653,16 +665,16 @@ const LINE_ITEMS = [
   }
 ];
 
-const STANDARD_DEDUCTIONS = {
-  Single: 14600,
-  "Married Filing Jointly": 29200,
-  "Married Filing Separately": 14600,
-  "Head of Household": 21900,
-  "Qualifying Surviving Spouse": 29200
+const STD_DED_2025 = {
+  single: 15750,
+  mfj: 31500,
+  mfs: 15750,
+  hoh: 23625,
+  qss: 31500
 };
 
 const TAX_BRACKETS = {
-  Single: [
+  single: [
     { upTo: 11600, rate: 0.1 },
     { upTo: 47150, rate: 0.12 },
     { upTo: 100525, rate: 0.22 },
@@ -671,7 +683,7 @@ const TAX_BRACKETS = {
     { upTo: 609350, rate: 0.35 },
     { upTo: Infinity, rate: 0.37 }
   ],
-  "Married Filing Jointly": [
+  mfj: [
     { upTo: 23200, rate: 0.1 },
     { upTo: 94300, rate: 0.12 },
     { upTo: 201050, rate: 0.22 },
@@ -680,7 +692,7 @@ const TAX_BRACKETS = {
     { upTo: 731200, rate: 0.35 },
     { upTo: Infinity, rate: 0.37 }
   ],
-  "Married Filing Separately": [
+  mfs: [
     { upTo: 11600, rate: 0.1 },
     { upTo: 47150, rate: 0.12 },
     { upTo: 100525, rate: 0.22 },
@@ -689,7 +701,7 @@ const TAX_BRACKETS = {
     { upTo: 365600, rate: 0.35 },
     { upTo: Infinity, rate: 0.37 }
   ],
-  "Head of Household": [
+  hoh: [
     { upTo: 16550, rate: 0.1 },
     { upTo: 63100, rate: 0.12 },
     { upTo: 100500, rate: 0.22 },
@@ -698,7 +710,7 @@ const TAX_BRACKETS = {
     { upTo: 609350, rate: 0.35 },
     { upTo: Infinity, rate: 0.37 }
   ],
-  "Qualifying Surviving Spouse": [
+  qss: [
     { upTo: 23200, rate: 0.1 },
     { upTo: 94300, rate: 0.12 },
     { upTo: 201050, rate: 0.22 },
@@ -748,7 +760,26 @@ function loadState() {
   }
   try {
     const parsed = JSON.parse(stored);
-    state.values = parsed.values || {};
+    const storedValues = parsed.values || {};
+    const legacyFilingStatus = storedValues["Header-Filing"];
+    const legacyStatusMap = {
+      Single: "single",
+      "Married Filing Jointly": "mfj",
+      "Married Filing Separately": "mfs",
+      "Head of Household": "hoh",
+      "Qualifying Surviving Spouse": "qss"
+    };
+    if (!storedValues.filingStatus && legacyFilingStatus) {
+      storedValues.filingStatus =
+        legacyStatusMap[legacyFilingStatus] ?? legacyFilingStatus;
+    }
+    if (!storedValues.dedMode && storedValues["12-Standard-Method"]) {
+      storedValues.dedMode =
+        storedValues["12-Standard-Method"] === "Standard deduction (auto)"
+          ? "standard"
+          : "itemized";
+    }
+    state.values = storedValues;
     state.currentIndex = parsed.currentIndex || 0;
     recalculateDerivedValues();
   } catch (error) {
@@ -804,7 +835,7 @@ function setDerivedValue(line, value) {
 }
 
 function getStandardDeduction(status) {
-  return STANDARD_DEDUCTIONS[status] ?? 0;
+  return STD_DED_2025[status] ?? 0;
 }
 
 function calculateTax(taxableIncome, status) {
@@ -831,19 +862,27 @@ function calculateTax(taxableIncome, status) {
 }
 
 function recalculateDerivedValues() {
-  const filingStatus = getValue("Header-Filing");
-  const standardMethod =
-    getValue("12-Standard-Method") || "Standard deduction (auto)";
-  if (!getValue("12-Standard-Method")) {
-    setDerivedValue("12-Standard-Method", standardMethod);
+  const filingStatus = getValue("filingStatus");
+  const deductionMode = getValue("dedMode") || "standard";
+  if (!getValue("dedMode")) {
+    setDerivedValue("dedMode", deductionMode);
+  }
+  if (state.values["13"] === undefined) {
+    setDerivedValue("13", "0");
+  }
+  if (state.values["14"] === undefined) {
+    setDerivedValue("14", "0");
   }
 
-  const useStandardDeduction = standardMethod === "Standard deduction (auto)";
+  const useStandardDeduction = deductionMode === "standard";
   if (useStandardDeduction) {
     const deductionAmount = getStandardDeduction(filingStatus);
+    setDerivedValue("12", deductionAmount ? formatAmount(deductionAmount) : "");
+  } else {
+    const itemizedTotal = parseAmount(getValue("itemizedTotal"));
     setDerivedValue(
       "12",
-      deductionAmount ? formatAmount(deductionAmount) : ""
+      hasAnyValue(["itemizedTotal"]) ? formatAmount(itemizedTotal) : ""
     );
   }
 
@@ -857,7 +896,7 @@ function recalculateDerivedValues() {
     hasAnyValue(wagesSources) ? formatAmount(wagesTotal) : ""
   );
 
-  const incomeSources = ["1z", "2b", "3b", "4b", "5b", "6b", "7", "8"];
+  const incomeSources = ["1a", "2b", "3b", "4b", "5b", "6b", "7", "8"];
   const totalIncome = incomeSources.reduce(
     (sum, line) => sum + parseAmount(getValue(line)),
     0
@@ -874,18 +913,14 @@ function recalculateDerivedValues() {
     hasAnyValue(["9", "10"]) ? formatAmount(Math.max(0, agi)) : ""
   );
 
-  const totalDeductions =
-    parseAmount(getValue("12")) + parseAmount(getValue("13"));
-  setDerivedValue(
-    "14",
-    hasAnyValue(["12", "13"]) ? formatAmount(totalDeductions) : ""
-  );
-
   const taxableIncome =
-    parseAmount(getValue("11")) - parseAmount(getValue("14"));
+    parseAmount(getValue("11")) -
+    parseAmount(getValue("12")) -
+    parseAmount(getValue("13")) -
+    parseAmount(getValue("14"));
   setDerivedValue(
     "15",
-    hasAnyValue(["11", "14"])
+    hasAnyValue(["11", "12"])
       ? formatAmount(Math.max(0, taxableIncome))
       : ""
   );
@@ -1006,6 +1041,22 @@ function buildMistakes(item) {
   return base.slice(0, 4);
 }
 
+function getInputId(item) {
+  if (item.line === "filingStatus") {
+    return "filingStatus";
+  }
+  if (item.line === "dedMode") {
+    return "dedMode";
+  }
+  if (item.line === "itemizedTotal") {
+    return "itemizedTotal";
+  }
+  if (/^\d/.test(item.line)) {
+    return `line-${item.line}`;
+  }
+  return `line-${item.line.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
 function renderCard() {
   cardContainer.innerHTML = "";
   const item = LINE_ITEMS[state.currentIndex];
@@ -1015,7 +1066,8 @@ function renderCard() {
   const header = document.createElement("div");
   header.className = "card-header";
   const title = document.createElement("h2");
-  title.textContent = `${item.line.includes("Header") || item.line.includes("Sign") ? "" : "Line "}${item.line} — ${item.label}`;
+  const isFormLine = /^\d/.test(item.line);
+  title.textContent = `${isFormLine ? "Line " : ""}${item.line} — ${item.label}`;
   header.appendChild(title);
   if (item.manual) {
     const badge = document.createElement("span");
@@ -1033,18 +1085,54 @@ function renderCard() {
   const inputRow = document.createElement("div");
   inputRow.className = "input-row";
   const label = document.createElement("label");
-  label.setAttribute("for", "lineInput");
+  const inputId = getInputId(item);
+  label.setAttribute("for", inputId);
   label.textContent = item.notes;
   inputRow.appendChild(label);
 
   let input;
-  if (item.type === "select") {
+  if (item.type === "radio") {
+    input = document.createElement("div");
+    input.className = "radio-group";
+    input.id = inputId;
+    item.options.forEach((optionValue) => {
+      const optionId = `${inputId}-${optionValue.value}`;
+      const wrapper = document.createElement("label");
+      wrapper.className = "radio-option";
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = inputId;
+      radio.id = optionId;
+      radio.value = optionValue.value;
+      radio.checked = getValue(item.line) === optionValue.value;
+      radio.addEventListener("change", () => {
+        if (radio.checked) {
+          setValue(item.line, optionValue.value);
+        }
+      });
+      const text = document.createElement("span");
+      text.textContent = optionValue.label;
+      wrapper.appendChild(radio);
+      wrapper.appendChild(text);
+      input.appendChild(wrapper);
+    });
+  } else if (item.type === "select") {
     input = document.createElement("select");
     item.options.forEach((optionValue) => {
       const option = document.createElement("option");
-      option.value = optionValue;
-      option.textContent = optionValue;
+      if (typeof optionValue === "string") {
+        option.value = optionValue;
+        option.textContent = optionValue;
+      } else {
+        option.value = optionValue.value;
+        option.textContent = optionValue.label;
+      }
       input.appendChild(option);
+    });
+    input.value = getValue(item.line);
+    input.id = inputId;
+    input.addEventListener("change", (event) => {
+      setValue(item.line, event.target.value);
     });
   } else {
     input = document.createElement("input");
@@ -1053,28 +1141,35 @@ function renderCard() {
       input.step = "0.01";
       input.min = "0";
     }
+    input.id = inputId;
+    input.value = getValue(item.line);
+    input.addEventListener("input", (event) => {
+      setValue(item.line, event.target.value);
+    });
   }
-  input.id = "lineInput";
-  input.value = getValue(item.line);
-  input.addEventListener("input", (event) => {
-    setValue(item.line, event.target.value);
-  });
 
-  const standardMethod = getValue("12-Standard-Method");
-  const isStandardDeduction = standardMethod === "Standard deduction (auto)";
-  if (item.line === "12") {
+  const isStandardDeduction = getValue("dedMode") !== "itemized";
+  if (item.line === "itemizedTotal") {
     input.disabled = isStandardDeduction;
   }
-  if (item.auto) {
+  if (item.line === "12" || item.auto) {
     input.disabled = true;
   }
 
   inputRow.appendChild(input);
-  if (item.line === "12" && isStandardDeduction) {
+  if (item.line === "12") {
     const helper = document.createElement("p");
     helper.className = "helper";
-    helper.textContent = "Auto-filled from the filing status standard deduction.";
+    helper.textContent = isStandardDeduction
+      ? "Standard deduction for 2025 based on filing status."
+      : "Line 12 mirrors your itemized deductions total.";
     inputRow.appendChild(helper);
+
+    const footnote = document.createElement("p");
+    footnote.className = "helper footnote";
+    footnote.textContent =
+      "Additional standard deduction for age/blindness not included (prototype).";
+    inputRow.appendChild(footnote);
   }
   if (item.auto) {
     const helper = document.createElement("p");
@@ -1125,7 +1220,7 @@ function closeModalWindow() {
 }
 
 function copyStudyPrompt(item) {
-  const filingStatus = getValue("Header-Filing") || "(not set)";
+  const filingStatus = getValue("filingStatus") || "(not set)";
   const value = getValue(item.line) || "(blank)";
   const prompt = `You are ChatGPT. Explain how to fill out Form 1040 line ${item.line} (${item.label}) for tax year 2025.\n\nCurrent entered value: ${value}\nFiling status: ${filingStatus}\n\nPlease cover: (1) how to calculate this line, (2) what documents feed it, (3) which schedules/worksheets apply, and (4) common mistakes to avoid. Ask clarifying questions if information is missing.`;
 
@@ -1239,15 +1334,17 @@ function downloadBlob(blob, filename) {
 function loadDemoData() {
   state.values = {
     "Header-Name": "Alex Example",
-    "Header-Filing": "Single",
+    filingStatus: "single",
     "Header-Dependents": "0",
-    "12-Standard-Method": "Standard deduction (auto)",
+    dedMode: "standard",
     "1a": "65000",
     "2b": "120",
     "3b": "75",
     "7": "500",
     "8": "0",
     "10": "1500",
+    "13": "0",
+    "14": "0",
     "25a": "7200",
     "Sign-Primary": "Alex Example"
   };
