@@ -22,6 +22,14 @@ body {
   color: var(--text);
 }
 
+.banner {
+  background: #fdecea;
+  color: var(--danger);
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  border-bottom: 1px solid #f6c6c0;
+}
+
 .app-header {
   display: flex;
   flex-wrap: wrap;
@@ -187,6 +195,23 @@ body {
   margin: 0;
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+.input-row .footnote {
+  font-style: italic;
+}
+
+.radio-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .card-actions {
